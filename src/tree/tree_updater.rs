@@ -3,7 +3,7 @@ use std::ops::DerefMut;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
-use ethers::abi::AbiDecode;
+use ethers::abi::{AbiDecode, AbiEncode};
 use ethers::contract::{EthCall, EthEvent};
 use ethers::providers::{Middleware, StreamExt};
 use ethers::types::{Filter, Selector, Transaction, ValueOrArray, H160, U256};
@@ -166,14 +166,14 @@ impl<M: Middleware> TreeUpdater<M> {
             );
 
             let entities: Vec<ActiveModel> = identities.iter().map(|id| {
-                insertions::ActiveModel {
+                ActiveModel {
                     pubkey: Set(id.to_string()),
                     inserted_at_block: Set(transaction.block_number.unwrap().as_u64() as i64),
-                    inserted_in_tx: Set(transaction.hash.to_string()),
+                    inserted_in_tx: Set(transaction.hash.encode_hex()),
                     ..Default::default()
                 }
             }).collect();
-            let res = Insertions::insert_many(entities).exec(db).await;
+            let _res = Insertions::insert_many(entities).exec(db).await;
 
             tree_data
                 .insert_many_at(start_index as usize, &identities);
