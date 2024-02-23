@@ -8,6 +8,8 @@ use ethers::contract::{EthCall, EthEvent};
 use ethers::providers::{Middleware, StreamExt};
 use ethers::types::{Filter, Selector, Transaction, ValueOrArray, H160, U256};
 use futures::stream::FuturesUnordered;
+use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::ActiveValue::Set;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
@@ -20,6 +22,10 @@ use crate::abi::{
     RegisterIdentitiesCall, TreeChangedFilter,
 };
 use crate::tree::Hash;
+
+use crate::entities::*;
+use crate::entities::insertions::ActiveModel;
+use crate::entities::prelude::Insertions;
 
 /// Manages the synchronization of the World Tree with it's onchain representation.
 pub struct TreeUpdater<M: Middleware> {
@@ -66,6 +72,7 @@ impl<M: Middleware> TreeUpdater<M> {
     pub async fn sync_to_head(
         &self,
         tree_data: &RwLock<TreeData>,
+        db: &DatabaseConnection
     ) -> Result<(), TreeAvailabilityError<M>> {
         tracing::info!("Syncing tree to chain head");
 
@@ -112,7 +119,7 @@ impl<M: Middleware> TreeUpdater<M> {
         }
 
         for tx in sorted_transactions.values() {
-            self.sync_from_transaction(tree_data.deref_mut(), tx)
+            self.sync_from_transaction(tree_data.deref_mut(), tx, &db)
                 .await?;
         }
 
@@ -130,6 +137,7 @@ impl<M: Middleware> TreeUpdater<M> {
         &self,
         tree_data: &mut TreeData,
         transaction: &Transaction,
+        db: &DatabaseConnection
     ) -> Result<(), TreeAvailabilityError<M>> {
         let tx_hash = transaction.hash;
         tracing::info!(?tx_hash, "Syncing from transaction");
@@ -157,6 +165,16 @@ impl<M: Middleware> TreeUpdater<M> {
                 "tree_availability.tree_updater.insertion"
             );
 
+            let entities: Vec<ActiveModel> = identities.iter().map(|id| {
+                insertions::ActiveModel {
+                    pubkey: Set(id.to_string()),
+                    inserted_at_block: Set(transaction.block_number.unwrap().as_u64() as i64),
+                    inserted_in_tx: Set(transaction.hash.to_string()),
+                    ..Default::default()
+                }
+            }).collect();
+            let res = Insertions::insert_many(entities).exec(db).await;
+
             tree_data
                 .insert_many_at(start_index as usize, &identities);
         } else if function_selector == DeleteIdentitiesCall::selector() {
@@ -178,7 +196,7 @@ impl<M: Middleware> TreeUpdater<M> {
                 "tree_availability.tree_updater.deletion"
             );
             tree_data.delete_many(&indices);
-
+            /* TODO: insert into db here */
         } else if function_selector == DeleteIdentitiesWithDeletionProofAndBatchSizeAndPackedDeletionIndicesAndPreRootCall::selector() {
 
             tracing::info!("Decoding deleteIdentities calldata");
@@ -200,7 +218,7 @@ impl<M: Middleware> TreeUpdater<M> {
                 .collect();
             tree_data.delete_many(&indices);
 
-
+            /* TODO: insert into db here */
         } else {
             return Err(TreeAvailabilityError::UnrecognizedFunctionSelector);
         }

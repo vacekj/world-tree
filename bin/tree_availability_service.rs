@@ -69,8 +69,8 @@ pub async fn main() -> eyre::Result<()> {
         config.world_tree.creation_block,
         config.world_tree.window_size,
         middleware,
-    )
-    .serve(config.world_tree.socket_address);
+    ).await
+    .serve(config.world_tree.socket_address).await;
 
     let mut handles = handles.into_iter().collect::<FuturesUnordered<_>>();
     while let Some(result) = handles.next().await {

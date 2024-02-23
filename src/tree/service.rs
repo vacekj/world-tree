@@ -9,6 +9,7 @@ use axum::{middleware, Json};
 use axum_middleware::logging;
 use ethers::providers::Middleware;
 use ethers::types::H160;
+use sea_orm::{Database, DatabaseConnection};
 use semaphore::lazy_merkle_tree::Canonical;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinHandle;
@@ -21,7 +22,11 @@ use super::{Hash, PoseidonTree, WorldTree};
 pub struct TreeAvailabilityService<M: Middleware + 'static> {
     /// In-memory representation of the merkle tree containing all verified World IDs.
     pub world_tree: Arc<WorldTree<M>>,
+    pub conn: DatabaseConnection
 }
+
+const DATABASE_URL: &str = env!("DATABASE_URL");
+const DB_NAME: &str = "postgres";
 
 impl<M: Middleware> TreeAvailabilityService<M> {
     /// Initializes new instance of `TreeAvailabilityService`,
@@ -38,7 +43,7 @@ impl<M: Middleware> TreeAvailabilityService<M> {
     /// # Returns
     ///
     /// New instance of `TreeAvailabilityService`.
-    pub fn new(
+    pub async fn new(
         tree_depth: usize,
         dense_prefix_depth: usize,
         tree_history_size: usize,
@@ -53,6 +58,8 @@ impl<M: Middleware> TreeAvailabilityService<M> {
             &Hash::ZERO,
         );
 
+        dbg!(DATABASE_URL);
+
         let world_tree = Arc::new(WorldTree::new(
             tree,
             tree_history_size,
@@ -62,7 +69,9 @@ impl<M: Middleware> TreeAvailabilityService<M> {
             middleware,
         ));
 
-        Self { world_tree }
+        let db = Database::connect(DATABASE_URL).await.unwrap();
+
+        Self { world_tree, conn: db }
     }
 
     /// Spawns an axum server and exposes an API endpoint to serve inclusion proofs for a given World ID. This function also spawns a new task to keep the world tree synced to the chain head.
@@ -74,7 +83,7 @@ impl<M: Middleware> TreeAvailabilityService<M> {
     /// # Returns
     ///
     /// Vector of `JoinHandle`s for the spawned tasks.
-    pub fn serve(
+    pub async fn serve(
         self,
         addr: SocketAddr,
     ) -> Vec<JoinHandle<Result<(), TreeAvailabilityError<M>>>> {
@@ -104,7 +113,7 @@ impl<M: Middleware> TreeAvailabilityService<M> {
         handles.push(server_handle);
 
         // Spawn a new task to keep the world tree synced to the chain head
-        handles.push(self.world_tree.spawn());
+        handles.push(self.world_tree.spawn().await);
 
         handles
     }

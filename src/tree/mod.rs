@@ -12,6 +12,7 @@ use std::time::Duration;
 use error::TreeAvailabilityError;
 use ethers::providers::Middleware;
 use ethers::types::H160;
+use sea_orm::Database;
 use semaphore::lazy_merkle_tree::{Canonical, LazyMerkleTree};
 use semaphore::merkle_tree::Hasher;
 use semaphore::poseidon_tree::PoseidonHash;
@@ -75,23 +76,27 @@ impl<M: Middleware> WorldTree<M> {
 
     /// Spawns a task that continually syncs the `TreeData` to the state at the chain head.
     #[instrument(skip(self))]
-    pub fn spawn(&self) -> JoinHandle<Result<(), TreeAvailabilityError<M>>> {
+    pub async fn spawn(&self) -> JoinHandle<Result<(), TreeAvailabilityError<M>>> {
         let tree_data = self.tree_data.clone();
         let tree_updater = self.tree_updater.clone();
 
         tracing::info!("Spawning thread to sync tree");
         let synced = self.synced.clone();
 
+        const DATABASE_URL: &str = env!("DATABASE_URL");
+        const DB_NAME: &str = "postgres";
+        let db = Database::connect(DATABASE_URL).await.unwrap();
+
         tokio::spawn(async move {
             let start = tokio::time::Instant::now();
-            tree_updater.sync_to_head(&tree_data).await?;
+            tree_updater.sync_to_head(&tree_data, &db).await?;
             let sync_time = start.elapsed();
 
             tracing::info!(?sync_time, "WorldTree synced to chain head");
             synced.store(true, Ordering::Relaxed);
 
             loop {
-                tree_updater.sync_to_head(&tree_data).await?;
+                tree_updater.sync_to_head(&tree_data, &db).await?;
 
                 tokio::time::sleep(Duration::from_secs(
                     SYNC_TO_HEAD_SLEEP_SECONDS,
