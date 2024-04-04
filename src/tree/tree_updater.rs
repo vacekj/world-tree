@@ -174,6 +174,7 @@ impl<M: Middleware> TreeUpdater<M> {
                 }
             }).collect();
             let _res = Insertions::insert_many(entities).exec(db).await;
+            dbg!(_res);
 
             tree_data
                 .insert_many_at(start_index as usize, &identities);
@@ -196,7 +197,7 @@ impl<M: Middleware> TreeUpdater<M> {
                 "tree_availability.tree_updater.deletion"
             );
             tree_data.delete_many(&indices);
-            /* TODO: insert into db here */
+            /* TODO: figure out which identities were deleted and insert them into db */
         } else if function_selector == DeleteIdentitiesWithDeletionProofAndBatchSizeAndPackedDeletionIndicesAndPreRootCall::selector() {
 
             tracing::info!("Decoding deleteIdentities calldata");
@@ -218,7 +219,7 @@ impl<M: Middleware> TreeUpdater<M> {
                 .collect();
             tree_data.delete_many(&indices);
 
-            /* TODO: insert into db here */
+            /* TODO: figure out which identities were deleted and insert them into db */
         } else {
             return Err(TreeAvailabilityError::UnrecognizedFunctionSelector);
         }
