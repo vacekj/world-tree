@@ -6,10 +6,11 @@ use std::sync::Arc;
 use ethers::abi::{AbiDecode, AbiEncode};
 use ethers::contract::{EthCall, EthEvent};
 use ethers::providers::{Middleware, StreamExt};
-use ethers::types::{Filter, Selector, Transaction, ValueOrArray, H160, U256};
+use ethers::types::{Filter, Selector, Transaction, ValueOrArray, H160, U256, U64};
 use futures::stream::FuturesUnordered;
 use sea_orm::{DatabaseConnection, EntityTrait};
 use sea_orm::ActiveValue::Set;
+use sea_orm::prelude::DateTime;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
@@ -147,6 +148,12 @@ impl<M: Middleware> TreeUpdater<M> {
         let function_selector = Selector::try_from(&calldata[0..4])
             .expect("Transaction data does not contain a function selector");
 
+        let block = self.middleware
+            .get_block(transaction.block_number.expect("Transaction must belong to a block"))
+            .await
+            .expect("Failed to get block")
+            .unwrap();
+
         if function_selector == RegisterIdentitiesCall::selector() {
             tracing::info!("Decoding registerIdentities calldata");
 
@@ -154,6 +161,7 @@ impl<M: Middleware> TreeUpdater<M> {
                 RegisterIdentitiesCall::decode(calldata.as_ref())?;
 
             let start_index = register_identities_call.start_index;
+            let batch_size = register_identities_call.identity_commitments.len();
             let identities = register_identities_call.identity_commitments;
 
             let identities: Vec<Hash> = identities
@@ -179,6 +187,12 @@ impl<M: Middleware> TreeUpdater<M> {
                 tx: Set(transaction.hash.encode_hex()),
                 total_inserted: Set(identities.len() as i64),
                 total_deleted: Set(0),
+                block: Set(transaction.block_number.unwrap_or(U64::zero()).as_u64() as i64),
+                batch_size: Set(batch_size as i64),
+                proof: Set(register_identities_call.insertion_proof.encode_hex().into()),
+                preroot: Set(register_identities_call.pre_root.encode_hex()),
+                postroot: Set(register_identities_call.post_root.encode_hex()),
+                created_at: Set(DateTime::from_timestamp_opt(block.timestamp.as_u64() as i64, 0).expect("Failed to parse datetime from block timestamp").and_utc().into()),
                 ..Default::default()
             };
             Batches::insert(batch_entity).exec(db).await.expect("Failed to insert batch into db");
@@ -201,8 +215,8 @@ impl<M: Middleware> TreeUpdater<M> {
                 .collect();
 
             metrics::increment_counter!(
-                "tree_availability.tree_updater.deletion"
-            );
+        "tree_availability.tree_updater.deletion"
+        );
             tree_data.delete_many(&indices);
             /* TODO: figure out which identities were deleted and insert them into db */
         } else if function_selector == DeleteIdentitiesWithDeletionProofAndBatchSizeAndPackedDeletionIndicesAndPreRootCall::selector() {
@@ -216,8 +230,8 @@ impl<M: Middleware> TreeUpdater<M> {
             );
 
             metrics::increment_counter!(
-                "tree_availability.tree_updater.deletion"
-            );
+        "tree_availability.tree_updater.deletion"
+        );
 
             let indices: Vec<usize> = indices
                 .into_iter().take_while(|x| *x != 2_u32.pow(tree_data.depth as u32))

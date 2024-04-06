@@ -12,6 +12,13 @@ pub struct Model {
     pub total_inserted: i64,
     pub total_deleted: i64,
     pub created_at: DateTimeWithTimeZone,
+    pub batch_size: i64,
+    #[sea_orm(column_type = "Text")]
+    pub preroot: String,
+    #[sea_orm(column_type = "Text")]
+    pub postroot: String,
+    pub proof: Json,
+    pub block: i64,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
