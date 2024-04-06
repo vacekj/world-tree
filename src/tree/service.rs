@@ -26,7 +26,6 @@ pub struct TreeAvailabilityService<M: Middleware + 'static> {
 }
 
 const DATABASE_URL: &str = env!("DATABASE_URL");
-const DB_NAME: &str = "postgres";
 
 impl<M: Middleware> TreeAvailabilityService<M> {
     /// Initializes new instance of `TreeAvailabilityService`,
@@ -57,8 +56,6 @@ impl<M: Middleware> TreeAvailabilityService<M> {
             dense_prefix_depth,
             &Hash::ZERO,
         );
-
-        dbg!(DATABASE_URL);
 
         let world_tree = Arc::new(WorldTree::new(
             tree,

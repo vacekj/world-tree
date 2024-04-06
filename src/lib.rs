@@ -1,4 +1,4 @@
 pub mod abi;
 pub mod serde_utils;
 pub mod tree;
-mod entities;
+pub mod entities;

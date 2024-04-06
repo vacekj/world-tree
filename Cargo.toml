@@ -56,5 +56,3 @@ path = "bin/tree_availability_service.rs"
 [[bench]]
 name  = "tree_data"
 harness = false
-
-
