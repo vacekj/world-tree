@@ -178,6 +178,7 @@ impl<M: Middleware> TreeUpdater<M> {
                     pubkey: Set(id.to_string()),
                     inserted_at_block: Set(transaction.block_number.unwrap().as_u64() as i64),
                     inserted_in_tx: Set(transaction.hash.encode_hex()),
+                    created_at: Set(DateTime::from_timestamp_opt(block.timestamp.as_u64() as i64, 0).expect("Failed to parse datetime from block timestamp").and_utc().into()),
                     ..Default::default()
                 }
             }).collect();
