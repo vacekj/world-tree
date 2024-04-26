@@ -7,7 +7,7 @@ use ethers::abi::{AbiDecode, AbiEncode};
 use ethers::contract::{EthCall, EthEvent};
 use ethers::providers::{Middleware, StreamExt};
 use ethers::types::{Filter, Selector, Transaction, ValueOrArray, H160, U256, U64};
-use futures::stream::FuturesUnordered;
+use futures::stream::{FuturesUnordered, iter};
 use sea_orm::{DatabaseConnection, EntityTrait};
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::DateTime;
@@ -25,8 +25,9 @@ use crate::abi::{
 use crate::entities::batches;
 use crate::tree::Hash;
 
-use crate::entities::insertions::ActiveModel;
-use crate::entities::prelude::{Batches, Insertions};
+use crate::entities::insertions::ActiveModel as InsertionActiveModel;
+use crate::entities::deletions::ActiveModel as DeletionActiveModel; 
+use crate::entities::prelude::{Batches, Deletions, Insertions};
 
 /// Manages the synchronization of the World Tree with it's onchain representation.
 pub struct TreeUpdater<M: Middleware> {
@@ -173,8 +174,8 @@ impl<M: Middleware> TreeUpdater<M> {
                 "tree_availability.tree_updater.insertion"
             );
 
-            let entities: Vec<ActiveModel> = identities.iter().map(|id| {
-                ActiveModel {
+            let entities: Vec<InsertionActiveModel> = identities.iter().map(|id| {
+                InsertionActiveModel {
                     pubkey: Set(id.to_string()),
                     inserted_in_block: Set(transaction.block_number.unwrap().as_u64() as i64),
                     inserted_in_tx: Set(transaction.hash.encode_hex()),
@@ -218,8 +219,33 @@ impl<M: Middleware> TreeUpdater<M> {
             metrics::increment_counter!(
         "tree_availability.tree_updater.deletion"
         );
-            tree_data.delete_many(&indices);
             /* TODO: figure out which identities were deleted and insert them into db */
+            let entities: Vec<DeletionActiveModel> = indices.iter().map(|index| tree_data.tree.get_leaf(*index)).map(|id| {
+                DeletionActiveModel {
+                    pubkey: Set(id.to_string()),
+                    deleted_at_block: Set(transaction.block_number.unwrap().as_u64() as i64),
+                    deleted_in_tx: Set(transaction.hash.encode_hex()),
+                    created_at: Set(DateTime::from_timestamp_opt(block.timestamp.as_u64() as i64, 0).expect("Failed to parse datetime from block timestamp").and_utc().into()),
+                    ..Default::default()
+                }
+            }).collect();
+            Deletions::insert_many(entities).exec(db).await.expect("Failed to insert identities into db");
+
+            let batch_entity = batches::ActiveModel {
+                tx: Set(transaction.hash.encode_hex()),
+                total_inserted: Set(0),
+                total_deleted: Set(indices.len() as i64),
+                block: Set(transaction.block_number.unwrap_or(U64::zero()).as_u64() as i64),
+                batch_size: Set(0),
+                proof: Set(delete_identities_call.deletion_proof.encode_hex().into()),
+                preroot: Set(delete_identities_call.pre_root.encode_hex()),
+                postroot: Set(delete_identities_call.post_root.encode_hex()),
+                created_at: Set(DateTime::from_timestamp_opt(block.timestamp.as_u64() as i64, 0).expect("Failed to parse datetime from block timestamp").and_utc().into()),
+                ..Default::default()
+            };
+            Batches::insert(batch_entity).exec(db).await.expect("Failed to insert batch into db");
+            
+            tree_data.delete_many(&indices);
         } else if function_selector == DeleteIdentitiesWithDeletionProofAndBatchSizeAndPackedDeletionIndicesAndPreRootCall::selector() {
             tracing::info!("Decoding deleteIdentities calldata");
 
