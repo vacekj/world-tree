@@ -219,7 +219,6 @@ impl<M: Middleware> TreeUpdater<M> {
             metrics::increment_counter!(
         "tree_availability.tree_updater.deletion"
         );
-            /* TODO: figure out which identities were deleted and insert them into db */
             let entities: Vec<DeletionActiveModel> = indices.iter().map(|index| tree_data.tree.get_leaf(*index)).map(|id| {
                 DeletionActiveModel {
                     pubkey: Set(id.to_string()),
@@ -264,9 +263,34 @@ impl<M: Middleware> TreeUpdater<M> {
                 .into_iter().take_while(|x| *x != 2_u32.pow(tree_data.depth as u32))
                 .map(|x| x as usize)
                 .collect();
-            tree_data.delete_many(&indices);
 
-            /* TODO: figure out which identities were deleted and insert them into db */
+            let entities: Vec<DeletionActiveModel> = indices.iter().map(|index| tree_data.tree.get_leaf(*index)).map(|id| {
+                DeletionActiveModel {
+                    pubkey: Set(id.to_string()),
+                    deleted_at_block: Set(transaction.block_number.unwrap().as_u64() as i64),
+                    deleted_in_tx: Set(transaction.hash.encode_hex()),
+                    created_at: Set(DateTime::from_timestamp_opt(block.timestamp.as_u64() as i64, 0).expect("Failed to parse datetime from block timestamp").and_utc().into()),
+                    ..Default::default()
+                }
+            }).collect();
+            Deletions::insert_many(entities).exec(db).await.expect("Failed to insert identities into db");
+
+            let batch_entity = batches::ActiveModel {
+                tx: Set(transaction.hash.encode_hex()),
+                total_inserted: Set(0),
+                total_deleted: Set(indices.len() as i64),
+                block: Set(transaction.block_number.unwrap_or(U64::zero()).as_u64() as i64),
+                batch_size: Set(0),
+                proof: Set(delete_identities_call.deletion_proof.encode_hex().into()),
+                preroot: Set(delete_identities_call.pre_root.encode_hex()),
+                postroot: Set(delete_identities_call.post_root.encode_hex()),
+                created_at: Set(DateTime::from_timestamp_opt(block.timestamp.as_u64() as i64, 0).expect("Failed to parse datetime from block timestamp").and_utc().into()),
+                ..Default::default()
+            };
+            Batches::insert(batch_entity).exec(db).await.expect("Failed to insert batch into db");
+            
+            tree_data.delete_many(&indices);
+            
         } else {
             return Err(TreeAvailabilityError::UnrecognizedFunctionSelector);
         }
