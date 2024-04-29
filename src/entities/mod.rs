@@ -3,4 +3,5 @@
 pub mod prelude;
 
 pub mod batches;
+pub mod deletions;
 pub mod insertions;

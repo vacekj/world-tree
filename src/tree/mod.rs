@@ -84,7 +84,6 @@ impl<M: Middleware> WorldTree<M> {
         let synced = self.synced.clone();
 
         const DATABASE_URL: &str = env!("DATABASE_URL");
-        const DB_NAME: &str = "postgres";
         let db = Database::connect(DATABASE_URL).await.unwrap();
 
         tokio::spawn(async move {
