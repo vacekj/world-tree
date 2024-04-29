@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ethers = { version = "2.0.10", features = [
+ethers = { version = "2.0.14", features = [
     "abigen",
     "ws",
     "ipc",
