@@ -1,0 +1,1 @@
+/* Module to handle indexing all WLD πairdrop claim events */
