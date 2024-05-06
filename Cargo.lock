@@ -831,9 +831,9 @@ dependencies = [
 
 [[package]]
 name = "cadence"
-version = "0.29.1"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f39286bc075b023101dccdb79456a1334221c768b8faede0c2aff7ed29a9482d"
+checksum = "2f338b979d9ebfff4bb9801ae8f3af0dc3615f7f1ca963f2e4782bcf9acb3753"
 dependencies = [
  "crossbeam-channel",
 ]
@@ -1133,7 +1133,7 @@ dependencies = [
  "ethers",
  "eyre",
  "http 0.2.12",
- "metrics",
+ "metrics 0.21.1",
  "metrics-exporter-statsd",
  "opentelemetry 0.20.0",
  "opentelemetry-datadog",
@@ -3409,13 +3409,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "metrics-exporter-statsd"
-version = "0.6.0"
+name = "metrics"
+version = "0.22.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e34a620eecf9e4321ebbef8f2f8e7cd22e098f11b65f2d987ce66faaa8918418"
+checksum = "2be3cbd384d4e955b231c895ce10685e3d8260c5ccffae898c96c723b0772835"
+dependencies = [
+ "ahash 0.8.11",
+ "portable-atomic",
+]
+
+[[package]]
+name = "metrics-exporter-statsd"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82bd7bb16e431f15d56a61b18ee34881cd9d427da7b4450d1a588c911c1d9ac3"
 dependencies = [
  "cadence",
- "metrics",
+ "metrics 0.22.3",
  "thiserror",
 ]
 
@@ -7327,7 +7337,7 @@ dependencies = [
  "governor",
  "hex",
  "hyper 0.14.28",
- "metrics",
+ "metrics 0.21.1",
  "opentelemetry 0.21.0",
  "rand",
  "reqwest 0.12.4",
