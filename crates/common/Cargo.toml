@@ -15,7 +15,7 @@ eyre = "0.6.8"
 serde = "1.0.193"
 metrics = "0.21.1"
 opentelemetry = { version = "0.20.0", features = ["rt-tokio"] }
-opentelemetry-datadog = {version = "0.8.0", features = ["reqwest-client"]}
+opentelemetry-datadog = {version = "0.10.0", features = ["reqwest-client"]}
 tracing = "0.1.40"
 tracing-opentelemetry = "0.21.0"
 tracing-subscriber = {version = "0.3.17", features = ["env-filter", "json"]}
