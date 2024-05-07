@@ -25,7 +25,7 @@ use crate::tree::error::{GrantClaimedError, TreeAvailabilityError};
 use crate::tree::{Hash, SYNC_TO_HEAD_SLEEP_SECONDS};
 use crate::tree::service::synced;
 use crate::tree::tree_data::TreeData;
-use crate::tree::tree_updater::unpack_indices;
+use crate::tree::tree_updater::{TreeUpdater, unpack_indices};
 
 /// Manages the synchronization of the World Tree with it's onchain representation.
 pub struct ClaimUpdater<M: Middleware> {
@@ -88,22 +88,30 @@ impl<M: Middleware> ClaimUpdater<M> {
 
         Ok(())
     }
+}
+
+pub struct ClaimStorage<M: Middleware> {
+    pub claim_updater: Arc<ClaimUpdater<M>>,
+}
+
+impl<M: Middleware> ClaimStorage<M> {
 
     /// Spawns a task that continually syncs the `TreeData` to the state at the chain head.
     #[instrument(skip(self))]
     pub async fn spawn(&self) -> JoinHandle<Result<(), GrantClaimedError<M>>> {
+        let claim_updater = self.claim_updater.clone();
         const DATABASE_URL: &str = env!("DATABASE_URL");
         let db = Database::connect(DATABASE_URL).await.unwrap();
 
         tokio::spawn(async move {
             let start = tokio::time::Instant::now();
-            self.sync_to_head(&db).await?;
+            claim_updater.sync_to_head(&db).await?;
             let sync_time = start.elapsed();
 
             tracing::info!(?sync_time, "ClaimUpdater synced to chain head");
 
             loop {
-                self.sync_to_head(&db).await?;
+                claim_updater.sync_to_head(&db).await?;
 
                 tokio::time::sleep(Duration::from_secs(
                     SYNC_TO_HEAD_SLEEP_SECONDS,

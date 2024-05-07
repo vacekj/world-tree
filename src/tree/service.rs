@@ -14,7 +14,7 @@ use sea_orm::{Database, DatabaseConnection};
 use semaphore::lazy_merkle_tree::Canonical;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinHandle;
-use crate::claims::ClaimUpdater;
+use crate::claims::{ClaimStorage, ClaimUpdater};
 
 use super::error::{TreeAvailabilityError, TreeError};
 use super::tree_data::InclusionProof;
@@ -24,7 +24,7 @@ use super::{Hash, PoseidonTree, WorldTree};
 pub struct TreeAvailabilityService<M: Middleware + 'static> {
     /// In-memory representation of the merkle tree containing all verified World IDs.
     pub world_tree: Arc<WorldTree<M>>,
-    pub claim_updater: Arc<ClaimUpdater<M>>,
+    pub claim_storage: Arc<ClaimStorage<M>>,
     pub conn: DatabaseConnection,
 }
 
@@ -76,7 +76,13 @@ impl<M: Middleware> TreeAvailabilityService<M> {
 
         let db = Database::connect(DATABASE_URL).await.unwrap();
 
-        Self { world_tree, claim_updater, conn: db }
+        Self {
+            world_tree,
+            claim_storage: Arc::new(ClaimStorage {
+                claim_updater
+            }),
+            conn: db,
+        }
     }
 
     /// Spawns an axum server and exposes an API endpoint to serve inclusion proofs for a given World ID. This function also spawns a new task to keep the world tree synced to the chain head.
@@ -120,7 +126,10 @@ impl<M: Middleware> TreeAvailabilityService<M> {
         // Spawn a new task to keep the world tree synced to the chain head
         handles.push(self.world_tree.spawn().await);
 
-        handles.push(self.claim_updater.)
+        handles.push( tokio::spawn(async move {
+            self.claim_storage.spawn().await;
+            Ok(())
+        }));
 
         handles
     }
