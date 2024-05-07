@@ -24,3 +24,13 @@ abigen!(
     event_derives(serde::Deserialize, serde::Serialize)
 
 );
+
+abigen!(
+    IRecurringGrantDrop,
+    r#"[
+         event GrantClaimed(uint256 grantId, address receiver)
+         function claim(uint256 grantId, address receiver, uint256 root, uint256 nullifierHash, uint256[8] calldata proof)
+         event Transfer(address indexed from, address indexed to, uint256 value)
+    ]"#,
+    event_derives(serde::Deserialize, serde::Serialize)
+);

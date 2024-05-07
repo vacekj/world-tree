@@ -6,6 +6,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{middleware, Json};
+use ethers::abi::Address;
 use axum_middleware::logging;
 use ethers::providers::Middleware;
 use ethers::types::H160;
@@ -13,6 +14,7 @@ use sea_orm::{Database, DatabaseConnection};
 use semaphore::lazy_merkle_tree::Canonical;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinHandle;
+use crate::claims::ClaimUpdater;
 
 use super::error::{TreeAvailabilityError, TreeError};
 use super::tree_data::InclusionProof;
@@ -22,7 +24,8 @@ use super::{Hash, PoseidonTree, WorldTree};
 pub struct TreeAvailabilityService<M: Middleware + 'static> {
     /// In-memory representation of the merkle tree containing all verified World IDs.
     pub world_tree: Arc<WorldTree<M>>,
-    pub conn: DatabaseConnection
+    pub claim_updater: Arc<ClaimUpdater<M>>,
+    pub conn: DatabaseConnection,
 }
 
 const DATABASE_URL: &str = env!("DATABASE_URL");
@@ -63,12 +66,17 @@ impl<M: Middleware> TreeAvailabilityService<M> {
             world_tree_address,
             world_tree_creation_block,
             window_size,
-            middleware,
+            middleware.clone(),
         ));
+
+        let addy: Address = "0x7f26A7572E8B877654eeDcBc4E573657619FA3CE".parse().unwrap();
+
+        let claim_updater = Arc::new(ClaimUpdater::new(addy,
+                                                       118372573, 2, middleware));
 
         let db = Database::connect(DATABASE_URL).await.unwrap();
 
-        Self { world_tree, conn: db }
+        Self { world_tree, claim_updater, conn: db }
     }
 
     /// Spawns an axum server and exposes an API endpoint to serve inclusion proofs for a given World ID. This function also spawns a new task to keep the world tree synced to the chain head.
@@ -111,6 +119,8 @@ impl<M: Middleware> TreeAvailabilityService<M> {
 
         // Spawn a new task to keep the world tree synced to the chain head
         handles.push(self.world_tree.spawn().await);
+
+        handles.push(self.claim_updater.)
 
         handles
     }
