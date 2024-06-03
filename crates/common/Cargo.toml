@@ -17,7 +17,7 @@ metrics = "0.21.1"
 opentelemetry = { version = "0.20.0", features = ["rt-tokio"] }
 opentelemetry-datadog = {version = "0.8.0", features = ["reqwest-client"]}
 tracing = "0.1.40"
-tracing-opentelemetry = "0.21.0"
+tracing-opentelemetry = "0.24.0"
 tracing-subscriber = {version = "0.3.17", features = ["env-filter", "json"]}
 tokio = "1.37.0"
 http = "0.2.9"
