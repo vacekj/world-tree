@@ -8,5 +8,5 @@ async-trait = "0.1.76"
 ethers = "2.0.10"
 eyre = "0.6.8"
 governor = "0.6.0"
-serde = { version = "1.0.193", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 
