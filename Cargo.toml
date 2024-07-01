@@ -8,7 +8,7 @@ edition = "2021"
 members = [ "crates/*" ]
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.86"
 axum = "0.6.20"
 axum-middleware = { path = "crates/axum-middleware" }
 clap = { version = "4.4.8", features = [ "derive", "env" ] }
