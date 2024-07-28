@@ -30,7 +30,6 @@ where
             info_span!("request", ?uri_path, ?request_method, ?request_query);
 
         async {
-            common::tracing::trace_from_headers(&parts.headers);
 
             info!(
                 uri_path,
@@ -51,7 +50,6 @@ where
                 response,
             )
             .await?;
-            common::tracing::trace_to_headers(response.headers_mut());
 
             Ok(response)
         }
@@ -69,7 +67,6 @@ where
         );
 
         async {
-            common::tracing::trace_from_headers(&parts.headers);
 
             info!(
                 ?uri_path,
@@ -92,7 +89,6 @@ where
             )
             .await?;
 
-            common::tracing::trace_to_headers(response.headers_mut());
 
             Ok(response)
         }

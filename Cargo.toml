@@ -32,8 +32,8 @@ hyper = { version = "^0.14.27", features = ["server", "tcp", "http1", "http2"] }
 metrics = "0.21.1"
 opentelemetry = "0.21.0"
 rand = "0.8.5"
-ruint = "1.12.1"
-semaphore = { git = "https://github.com/worldcoin/semaphore-rs", branch = "main", features = [
+ruint = "1.11.1"
+semaphore = { git = "https://github.com/worldcoin/semaphore-rs", rev = "7fb2292f5913f6d0bce5f6a89df4031456d2134a", features = [
     "depth_20",
 ] }
 serde = { version = "1.0.203", features = ["derive"] }
@@ -43,6 +43,7 @@ tokio = { version = "1.37.0", features = ["sync", "macros", "rt-multi-thread"] }
 thiserror = "1.0.58"
 toml = "0.8.8"
 tracing = "0.1.37"
+tracing-subscriber = "0.3.18"
 url = "2.4.1"
 sea-orm = { version = "^0.12.0", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
 
