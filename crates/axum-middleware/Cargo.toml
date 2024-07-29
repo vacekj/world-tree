@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 tracing = "0.1.40"
-axum = "0.6.20"
+axum = "0.7.5"
 hyper = { version = "^0.14.27", features = ["server", "tcp", "http1", "http2"] }
 bytes = "1.6.0"
 futures-util = "0.3.29"
