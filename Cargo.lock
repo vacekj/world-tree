@@ -1139,7 +1139,7 @@ dependencies = [
  "ethers",
  "eyre",
  "http 0.2.12",
- "metrics 0.21.1",
+ "metrics",
  "metrics-exporter-statsd",
  "opentelemetry 0.20.0",
  "opentelemetry-datadog",
@@ -3422,17 +3422,6 @@ dependencies = [
 
 [[package]]
 name = "metrics"
-version = "0.21.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fde3af1a009ed76a778cb84fdef9e7dbbdf5775ae3e4cc1f434a6a307f6f76c5"
-dependencies = [
- "ahash 0.8.11",
- "metrics-macros",
- "portable-atomic",
-]
-
-[[package]]
-name = "metrics"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "884adb57038347dfbaf2d5065887b6cf4312330dc8e94bc30a1a839bd79d3261"
@@ -3448,19 +3437,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0905009f54328c743a2046a86c88157621f473a2202cfa922cb716615c4b292"
 dependencies = [
  "cadence",
- "metrics 0.23.0",
+ "metrics",
  "thiserror",
-]
-
-[[package]]
-name = "metrics-macros"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b4faf00617defe497754acde3024865bc143d44a86799b24e191ecff91354f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.71",
 ]
 
 [[package]]
@@ -7418,7 +7396,7 @@ dependencies = [
  "governor",
  "hex",
  "hyper 0.14.30",
- "metrics 0.21.1",
+ "metrics",
  "opentelemetry 0.21.0",
  "rand",
  "reqwest 0.12.5",
