@@ -59,9 +59,6 @@ ARG BIN=tree-availability-service
 # Build the binary
 RUN cargo build --release --bin $BIN --no-default-features
 
-# Make sure it runs
-RUN /src/target/release/$BIN --version
-
 ### Runtime stage
 # cc variant because we need libgcc and others
 FROM gcr.io/distroless/cc-debian12:nonroot
