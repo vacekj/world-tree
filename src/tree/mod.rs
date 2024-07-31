@@ -76,17 +76,16 @@ impl<M: Middleware> WorldTree<M> {
 
     /// Spawns a task that continually syncs the `TreeData` to the state at the chain head.
     #[instrument(skip(self))]
-    pub async fn spawn(&self) -> JoinHandle<Result<(), TreeAvailabilityError<M>>> {
+    pub fn spawn(&self) -> JoinHandle<Result<(), TreeAvailabilityError<M>>> {
         let tree_data = self.tree_data.clone();
         let tree_updater = self.tree_updater.clone();
 
         tracing::info!("Spawning thread to sync tree");
         let synced = self.synced.clone();
 
-        let DATABASE_URL = std::env::var("DATABASE_URL").unwrap();
-        let db = Database::connect(DATABASE_URL).await.unwrap();
-
         tokio::spawn(async move {
+            let database_url = std::env::var("database_url").unwrap();
+            let db = Database::connect(database_url).await.unwrap();
             let start = tokio::time::Instant::now();
             tree_updater.sync_to_head(&tree_data, &db).await?;
             let sync_time = start.elapsed();

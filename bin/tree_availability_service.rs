@@ -9,7 +9,6 @@ use ethers_throttle::ThrottledProvider;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use governor::Jitter;
-use tracing::Level;
 use world_tree::tree::config::ServiceConfig;
 use world_tree::tree::service::TreeAvailabilityService;
 
@@ -27,14 +26,15 @@ struct Opts {
     datadog: bool,
 }
 
-const SERVICE_NAME: &str = "tree-availability-service";
-const METRICS_HOST: &str = "localhost";
-const METRICS_PORT: u16 = 8125;
-
 #[tokio::main]
 pub async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
     let config = ServiceConfig::load(Some(Path::new("/bin/default_config.json")))?;
+
+    // construct a subscriber that prints formatted traces to stdout
+    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    // use that subscriber to process traces emitted after this point
+    tracing::subscriber::set_global_default(subscriber)?;
 
     let http_provider = Http::new(config.provider.rpc_endpoint);
 
@@ -57,8 +57,8 @@ pub async fn main() -> eyre::Result<()> {
         config.world_tree.creation_block,
         config.world_tree.window_size,
         middleware,
-    ).await
-        .serve(config.world_tree.socket_address).await;
+    )
+        .serve(config.world_tree.socket_address);
 
     let mut handles = handles.into_iter().collect::<FuturesUnordered<_>>();
     while let Some(result) = handles.next().await {

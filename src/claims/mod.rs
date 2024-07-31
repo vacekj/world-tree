@@ -96,16 +96,15 @@ pub struct ClaimStorage<M: Middleware> {
 }
 
 impl<M: Middleware> ClaimStorage<M> {
-
     /// Spawns a task that continually syncs the `TreeData` to the state at the chain head.
     #[instrument(skip(self))]
-    pub async fn spawn(&self) -> JoinHandle<Result<(), GrantClaimedError<M>>> {
+    pub fn spawn(&self) -> JoinHandle<Result<(), GrantClaimedError<M>>> {
         let claim_updater = self.claim_updater.clone();
-        let DATABASE_URL = std::env::var("DATABASE_URL").unwrap();
-        let db = Database::connect(DATABASE_URL).await.unwrap();
-
+        
         tokio::spawn(async move {
-            let start = tokio::time::Instant::now();
+            let database_url = std::env::var("DATABASE_URL").unwrap();
+            let db = Database::connect(database_url).await.unwrap();
+            let start = tokio::time::Instant::now(); 
             claim_updater.sync_to_head(&db).await?;
             let sync_time = start.elapsed();
 

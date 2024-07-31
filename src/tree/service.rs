@@ -25,7 +25,6 @@ pub struct TreeAvailabilityService<M: Middleware + 'static> {
     /// In-memory representation of the merkle tree containing all verified World IDs.
     pub world_tree: Arc<WorldTree<M>>,
     pub claim_storage: Arc<ClaimStorage<M>>,
-    pub conn: DatabaseConnection,
 }
 
 impl<M: Middleware> TreeAvailabilityService<M> {
@@ -43,7 +42,7 @@ impl<M: Middleware> TreeAvailabilityService<M> {
     /// # Returns
     ///
     /// New instance of `TreeAvailabilityService`.
-    pub async fn new(
+    pub fn new(
         tree_depth: usize,
         dense_prefix_depth: usize,
         tree_history_size: usize,
@@ -71,16 +70,12 @@ impl<M: Middleware> TreeAvailabilityService<M> {
 
         let claim_updater = Arc::new(ClaimUpdater::new(addy,
                                                        118372573, 2, middleware));
-        
-        
-        let db = Database::connect(std::env::var("DATABASE_URL").unwrap()).await.unwrap();
 
         Self {
             world_tree,
             claim_storage: Arc::new(ClaimStorage {
                 claim_updater
             }),
-            conn: db,
         }
     }
 
@@ -93,7 +88,7 @@ impl<M: Middleware> TreeAvailabilityService<M> {
     /// # Returns
     ///
     /// Vector of `JoinHandle`s for the spawned tasks.
-    pub async fn serve(
+    pub fn serve(
         self,
         addr: SocketAddr,
     ) -> Vec<JoinHandle<Result<(), TreeAvailabilityError<M>>>> {
@@ -123,13 +118,8 @@ impl<M: Middleware> TreeAvailabilityService<M> {
         handles.push(server_handle);
 
         // Spawn a new task to keep the world tree synced to the chain head
-        handles.push(self.world_tree.spawn().await);
-
-        handles.push( tokio::spawn(async move {
-            self.claim_storage.spawn().await;
-            Ok(())
-        }));
-
+        handles.push(self.world_tree.spawn());
+        
         handles
     }
 }
