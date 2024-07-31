@@ -28,8 +28,6 @@ pub struct TreeAvailabilityService<M: Middleware + 'static> {
     pub conn: DatabaseConnection,
 }
 
-const DATABASE_URL: &str = env!("DATABASE_URL");
-
 impl<M: Middleware> TreeAvailabilityService<M> {
     /// Initializes new instance of `TreeAvailabilityService`,
     ///
@@ -73,8 +71,9 @@ impl<M: Middleware> TreeAvailabilityService<M> {
 
         let claim_updater = Arc::new(ClaimUpdater::new(addy,
                                                        118372573, 2, middleware));
-
-        let db = Database::connect(DATABASE_URL).await.unwrap();
+        
+        
+        let db = Database::connect(std::env::var("DATABASE_URL").unwrap()).await.unwrap();
 
         Self {
             world_tree,

@@ -1,6 +1,7 @@
 /* Module to handle indexing all WLD airdrop claim events */
 
 use std::collections::BTreeMap;
+use ethers::contract::EthEvent;
 use std::ops::DerefMut;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -100,7 +101,7 @@ impl<M: Middleware> ClaimStorage<M> {
     #[instrument(skip(self))]
     pub async fn spawn(&self) -> JoinHandle<Result<(), GrantClaimedError<M>>> {
         let claim_updater = self.claim_updater.clone();
-        const DATABASE_URL: &str = env!("DATABASE_URL");
+        let DATABASE_URL = std::env::var("DATABASE_URL").unwrap();
         let db = Database::connect(DATABASE_URL).await.unwrap();
 
         tokio::spawn(async move {

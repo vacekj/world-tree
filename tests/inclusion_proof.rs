@@ -67,7 +67,7 @@ async fn test_inclusion_proof() -> eyre::Result<()> {
         middleware,
     );
 
-    let world_tree = tree_availability_service.world_tree.clone();
+    let world_tree = tree_availability_service.await.world_tree.clone();
 
     // Spawn the service in a separate task
     let server_handle = tokio::spawn(async move {

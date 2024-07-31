@@ -1,12 +1,12 @@
 use std::collections::{HashMap, VecDeque};
 
 use semaphore::lazy_merkle_tree::{Canonical, Derived, VersionMarker};
-use semaphore::poseidon_tree::{Branch, Proof};
+use semaphore::poseidon_tree::{ Proof};
 use semaphore::Field;
+use semaphore::merkle_tree::{Branch, Hasher};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
-
 use super::{Hash, PoseidonTree};
 
 macro_rules! current_unix_timestamp {
@@ -200,8 +200,6 @@ impl TreeData {
 #[serde(rename_all = "camelCase")]
 pub struct InclusionProof {
     pub root: Field,
-    //TODO: Open a PR to semaphore-rs to deserialize proof instead of implementing deserialization here
-    #[serde(deserialize_with = "deserialize_proof")]
     pub proof: Proof,
 }
 
@@ -223,25 +221,6 @@ impl HistoricalTree {
             tree,
             root_timestamp,
         }
-    }
-}
-
-fn deserialize_proof<'de, D>(deserializer: D) -> Result<Proof, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let value: Value = Deserialize::deserialize(deserializer)?;
-    if let Value::Array(array) = value {
-        let mut branches = vec![];
-        for value in array {
-            let branch = serde_json::from_value::<Branch>(value)
-                .map_err(serde::de::Error::custom)?;
-            branches.push(branch);
-        }
-
-        Ok(semaphore::merkle_tree::Proof(branches))
-    } else {
-        Err(D::Error::custom("Expected an array"))
     }
 }
 

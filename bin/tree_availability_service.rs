@@ -3,9 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use clap::Parser;
-use common::metrics::init_statsd_exporter;
 use common::shutdown_tracer_provider;
-use common::tracing::{init_datadog_subscriber, init_subscriber};
 use ethers::providers::{Http, Provider};
 use ethers_throttle::ThrottledProvider;
 use futures::stream::FuturesUnordered;
@@ -40,13 +38,6 @@ pub async fn main() -> eyre::Result<()> {
     let opts = Opts::parse();
 
     let config = ServiceConfig::load(opts.config.as_deref())?;
-
-    if opts.datadog {
-        init_datadog_subscriber(SERVICE_NAME, Level::INFO);
-        init_statsd_exporter(METRICS_HOST, METRICS_PORT);
-    } else {
-        init_subscriber(Level::INFO);
-    }
 
     let http_provider = Http::new(config.provider.rpc_endpoint);
 

@@ -83,7 +83,7 @@ impl<M: Middleware> WorldTree<M> {
         tracing::info!("Spawning thread to sync tree");
         let synced = self.synced.clone();
 
-        const DATABASE_URL: &str = env!("DATABASE_URL");
+        let DATABASE_URL = std::env::var("DATABASE_URL").unwrap();
         let db = Database::connect(DATABASE_URL).await.unwrap();
 
         tokio::spawn(async move {
