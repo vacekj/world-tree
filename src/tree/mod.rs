@@ -84,7 +84,7 @@ impl<M: Middleware> WorldTree<M> {
         let synced = self.synced.clone();
 
         tokio::spawn(async move {
-            let database_url = std::env::var("database_url").unwrap();
+            let database_url = std::env::var("DATABASE_URL").unwrap();
             let db = Database::connect(database_url).await.unwrap();
             let start = tokio::time::Instant::now();
             tree_updater.sync_to_head(&tree_data, &db).await?;
