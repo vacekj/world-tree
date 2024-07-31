@@ -72,7 +72,7 @@ async fn test_inclusion_proof() -> eyre::Result<()> {
     // Spawn the service in a separate task
     let server_handle = tokio::spawn(async move {
         let handles =
-            tree_availability_service.await.serve(([127, 0, 0, 1], 8080).into());
+            tree_availability_service.await.serve(([127, 0, 0, 1], 8080).into()).await;
 
         let mut handles = handles.into_iter().collect::<FuturesUnordered<_>>();
         while let Some(result) = handles.next().await {

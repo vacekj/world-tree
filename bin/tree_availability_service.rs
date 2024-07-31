@@ -50,7 +50,7 @@ pub async fn main() -> eyre::Result<()> {
     let middleware = Arc::new(Provider::new(throttled_http_provider));
 
     let handles = TreeAvailabilityService::new(
-        config.world_tree.tree_dept,
+        config.world_tree.tree_depth,
         config.world_tree.dense_prefix_depth,
         config.world_tree.tree_history_size,
         config.world_tree.world_id_contract_address,
