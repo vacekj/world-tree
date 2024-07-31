@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -37,7 +37,7 @@ pub async fn main() -> eyre::Result<()> {
 
     let opts = Opts::parse();
 
-    let config = ServiceConfig::load(opts.config.as_deref())?;
+    let config = ServiceConfig::load(Some(Path::new("./default_config.json")))?;
 
     let http_provider = Http::new(config.provider.rpc_endpoint);
 
@@ -61,7 +61,7 @@ pub async fn main() -> eyre::Result<()> {
         config.world_tree.window_size,
         middleware,
     ).await
-    .serve(config.world_tree.socket_address).await;
+        .serve(config.world_tree.socket_address).await;
 
     let mut handles = handles.into_iter().collect::<FuturesUnordered<_>>();
     while let Some(result) = handles.next().await {
