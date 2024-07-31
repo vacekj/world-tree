@@ -34,7 +34,7 @@ const METRICS_PORT: u16 = 8125;
 #[tokio::main]
 pub async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
-    println!("{}", std::process::Command::new("ls").output().expect("Failed to execute command").stdout.iter().map(|&c| c as char).collect::<String>());    let config = ServiceConfig::load(Some(Path::new("./default_config.json")))?;
+    let config = ServiceConfig::load(Some(Path::new("./default_config.json")))?;
 
     let http_provider = Http::new(config.provider.rpc_endpoint);
 
