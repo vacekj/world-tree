@@ -34,7 +34,7 @@ const METRICS_PORT: u16 = 8125;
 #[tokio::main]
 pub async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
-    let config = ServiceConfig::load(Some(Path::new("./default_config.json")))?;
+    let config = ServiceConfig::load(Some(Path::new("/bin/default_config.json")))?;
 
     let http_provider = Http::new(config.provider.rpc_endpoint);
 
@@ -50,7 +50,7 @@ pub async fn main() -> eyre::Result<()> {
     let middleware = Arc::new(Provider::new(throttled_http_provider));
 
     let handles = TreeAvailabilityService::new(
-        config.world_tree.tree_depth,
+        config.world_tree.tree_dept,
         config.world_tree.dense_prefix_depth,
         config.world_tree.tree_history_size,
         config.world_tree.world_id_contract_address,
