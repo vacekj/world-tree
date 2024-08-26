@@ -29,7 +29,7 @@ struct Opts {
 #[tokio::main]
 pub async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
-    let config = ServiceConfig::load(Some(Path::new("/bin/default_config.json")))?;
+    let config = ServiceConfig::load(Some(Path::new("~/world-tree/default_config.json")))?;
 
     // construct a subscriber that prints formatted traces to stdout
     let subscriber = tracing_subscriber::FmtSubscriber::new();
