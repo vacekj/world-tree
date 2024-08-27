@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use clap::Parser;
 use common::shutdown_tracer_provider;
-use ethers::providers::{Http, Provider};
+use ethers::providers::{Http, Provider, RetryClientBuilder};
 use ethers_throttle::ThrottledProvider;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -46,8 +46,13 @@ pub async fn main() -> eyre::Result<()> {
             Duration::from_millis(5_000),
         )),
     );
-
-    let middleware = Arc::new(Provider::new(throttled_http_provider));
+    let retry_provider = RetryClientBuilder::default()
+        .rate_limit_retries(10)
+        .timeout_retries(3)
+        .initial_backoff(Duration::from_millis(500))
+        .build(throttled_http_provider, Box::<ethers::providers::HttpRateLimitRetryPolicy>::default());
+    
+    let middleware = Arc::new(Provider::new(retry_provider));
 
     let handles = TreeAvailabilityService::new(
         config.world_tree.tree_depth,
