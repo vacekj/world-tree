@@ -46,7 +46,7 @@ pub async fn main() -> eyre::Result<()> {
         config.provider.throttle.unwrap_or(u32::MAX),
         Some(Jitter::new(
             Duration::from_millis(50),
-            Duration::from_millis(5_000),
+            Duration::from_millis(500),
         )),
     );
     let retry_provider = RetryClientBuilder::default()
