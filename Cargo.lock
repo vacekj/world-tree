@@ -1143,7 +1143,7 @@ dependencies = [
  "metrics-exporter-statsd",
  "opentelemetry 0.20.0",
  "opentelemetry-datadog",
- "opentelemetry-http 0.9.0",
+ "opentelemetry-http",
  "serde",
  "serde_json",
  "tokio",
@@ -3877,7 +3877,7 @@ dependencies = [
  "itoa",
  "once_cell",
  "opentelemetry 0.23.0",
- "opentelemetry-http 0.12.0",
+ "opentelemetry-http",
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk 0.23.0",
  "reqwest 0.11.27",
@@ -3885,18 +3885,6 @@ dependencies = [
  "ryu",
  "thiserror",
  "url",
-]
-
-[[package]]
-name = "opentelemetry-http"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7594ec0e11d8e33faf03530a4c49af7064ebba81c1480e01be67d90b356508b"
-dependencies = [
- "async-trait",
- "bytes",
- "http 0.2.12",
- "opentelemetry_api",
 ]
 
 [[package]]
